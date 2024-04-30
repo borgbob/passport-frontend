@@ -7,11 +7,13 @@ import Twitter from "next-auth/providers/twitter";
 import { SiweMessage } from "siwe";
 import { cookies } from "next/headers";
 
-// Environment variables implicitly required here: 
+// Environment variables required here:
 //
-// - AUTH_SECRET
-// - AUTH_GITHUB_ID
-// - AUTH_GITHUB_SECRET
+// - JWT_SECRET
+// - GITHUB_ID
+// - GITHUB_SECRET
+// - TWITTER_ID
+// - TWITTER_SECRET
 
 const CSRF_TOKEN_COOKIE_NAME = "authjs.csrf-token";
 const SESSION_COOKIE_NAME = "authjs.session-token";
@@ -59,7 +61,7 @@ async function verify(secret: string, input: string): Promise<any> {
 }
 
 export const config: NextAuthConfig = {
-  secret: process.env.AUTH_SECRET,
+  secret: process.env.JWT_SECRET,
 
   session: {
     strategy: 'jwt',
