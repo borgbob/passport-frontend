@@ -128,13 +128,16 @@ export const config: NextAuthConfig = {
       const secret = encodedKeyCache.entries().next().value[0]
       const currentSession = await verify(secret, sessionCookie)
 
-      const linkedAccounts = currentSession.linkedAccounts ?? {} as Record<string, string>
+      const linkedAccounts = (currentSession.linkedAccounts ?? {}) as Record<string, string>
       switch (provider) {
         case 'github':
-          linkedAccounts[provider] = profile?.login
+          linkedAccounts[provider] = profile?.login as string
+          break;
+        case 'twitter':
+          linkedAccounts[provider] = (profile?.data as any)?.username as string
           break;
         default:
-          console.warn('Unknown provider', provider)
+          console.warn('Unknown provider', provider, profile)
           break;
       }
 
