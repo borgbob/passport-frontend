@@ -10,6 +10,8 @@ interface Credentials {
   signature: string
 }
 
+export type Auth = ReturnType<typeof useAuth>
+
 export function useAuth() {
   const queryClient = useQueryClient();
 
