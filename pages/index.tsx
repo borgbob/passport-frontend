@@ -1,10 +1,14 @@
 import { useAuth, type Auth } from "@/hooks/useAuth";
+import { useMutation } from '@tanstack/react-query';
 import Image from 'next/image'
 import { SiweMessage } from "siwe";
 import { ConnectKitButton } from 'connectkit';
 import type { Address, Chain } from 'viem'
-import { useAccount, useSignMessage } from "wagmi"
+import { useAccount, useSignMessage, useWriteContract } from "wagmi"
 import { Button } from "@/components/ui/button"
+import { jsonParseBigInt } from "@/lib/utils"
+
+import { PROXY_CONTRACT_ADDRESS } from "@/lib/config"
 
 import { isDiamondHands } from "@/lib/diamond-hands"
 
@@ -56,6 +60,24 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
   const githubLinked = session.user?.linkedAccounts?.['github']
   const twitterLinked = session.user?.linkedAccounts?.['twitter']
   const diamondHands = isDiamondHands(session.user?.sub)
+  const {
+    isPending: sendingTransaction,
+    data: transactionHash,
+    writeContract
+  } = useWriteContract()
+
+  const attestMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/attest', {
+        method: 'POST'
+      })
+      const data = await res.json()
+      const message = jsonParseBigInt(data.signedMessage)
+      // now need to translate "message" into a writeContract call to the proxy:
+      // reference: https://wagmi.sh/react/guides/write-to-contract
+      console.log('SIGNED TRANSACTION', message)
+    }
+  })
 
   const socialConnections = [{
     name: 'github',
@@ -99,20 +121,24 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
             <Image src={`/${name}.png`} alt={`${name} connection`} width={75} height={75} />
             {linked ? (
               <p>{connectedDescription}</p>) : (<>
-              <p>{description}</p>
-              <form action={connectUrl} method="post">
-                <input type="hidden" name="csrfToken" value={csrfToken} />
-                <input type="hidden" name="callbackUrl" value={window.location.origin} />
-                <Button type="submit">{buttonLabel}</Button>
-              </form></>)}
+                <p>{description}</p>
+                <form action={connectUrl} method="post">
+                  <input type="hidden" name="csrfToken" value={csrfToken} />
+                  <input type="hidden" name="callbackUrl" value={window.location.origin} />
+                  <Button type="submit">{buttonLabel}</Button>
+                </form></>)}
           </div>
         ))}
-          <div className="mr-10 mt-10 flex flex-col items-center justify-between bg-gray-100 border rounded-sm p-5 w-[300px] h-[200px]">
-            <Image src={`/diamond.png`} alt={`Is diamond hands`} width={75} height={75} />
-            {diamondHands ? (
-              <p>You have diamond hands!</p>) : (
-              <p>You do not have diamond hands</p>)}
-          </div>
+        <div className="mr-10 mt-10 flex flex-col items-center justify-between bg-gray-100 border rounded-sm p-5 w-[300px] h-[200px]">
+          <Image src={`/diamond.png`} alt={`Is diamond hands`} width={75} height={75} />
+          {diamondHands ? (
+            <><p>You have diamond hands!</p>
+              <Button type="button" onClick={() => {
+                attestMutation.mutate()
+              }}>Attest</Button></>
+          ) : (
+            <p>You do not have diamond hands</p>)}
+        </div>
       </div>
     </div>
   )
@@ -121,14 +147,16 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
 export default function Home() {
   const { signMessageAsync } = useSignMessage()
   const { session, csrfToken, signIn, signOut } = useAuth()
-  const { address, chain } = useAccount()
+  const { address, chain, isConnected } = useAccount()
 
   return (
-    <main className="flex flex-col items-center justify-between">
-      <div className="m-5">
-        <ConnectKitButton />
-      </div>
-      {session ?
+    <main className="flex flex-col items-center justify-between pt-5">
+
+      {!isConnected ? (
+        <div>
+          <ConnectKitButton />
+        </div>
+      ) : session ?
         <SignedIn
           csrfToken={csrfToken}
           session={session}
