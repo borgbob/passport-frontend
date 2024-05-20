@@ -14,7 +14,7 @@ const devChains = ([
 export const chains = process.env.NODE_ENV === 'production' ? prodChains : devChains
 export const WALLETCONNECT_PROJECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!;
 
-export const PROXY_CONTRACT_ADDRESS = process.env.PROXY_CONTRACT_ADDRESS!;
+export const PROXY_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_PROXY_CONTRACT_ADDRESS!;
 export const PRIVATE_KEY = process.env.PRIVATE_KEY!;
 
 // This is actually the GM schema. If schema UIDs are deterministic, then we can probably hardcode the diamond hands schema uid here.

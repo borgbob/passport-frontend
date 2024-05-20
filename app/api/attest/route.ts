@@ -40,8 +40,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'User is not diamond hands' }, { status: 400 })
   }
 
-  console.log('LOGGED IN WALLET ADDRESS', walletAddress)
-
   // TODO: Replace this with a call to the blockchain to check if the user
   // has already attested
   if (isAttested) {
@@ -68,11 +66,11 @@ export async function POST(req: NextRequest) {
   };
 
   const response = await delegated.signDelegatedProxyAttestation(params, signer);
-  const signedMessage = jsonStringifyBigInt({
+  const signedResponse = jsonStringifyBigInt({
     message: response.message,
     signature: response.signature,
   })
-  console.log('Signed attestation:\n', signedMessage);
 
-  return NextResponse.json({ signedMessage })
+
+  return NextResponse.json({ signedResponse })
 }

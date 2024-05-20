@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import Image from 'next/image'
 import { SiweMessage } from "siwe";
 import { ConnectKitButton } from 'connectkit';
+import { EIP712Proxy } from "@ethereum-attestation-service/eas-sdk/dist/eip712-proxy";
 import type { Address, Chain } from 'viem'
 import { useAccount, useSignMessage, useWriteContract } from "wagmi"
 import { Button } from "@/components/ui/button"
@@ -11,6 +12,8 @@ import { jsonParseBigInt } from "@/lib/utils"
 import { PROXY_CONTRACT_ADDRESS } from "@/lib/config"
 
 import { isDiamondHands } from "@/lib/diamond-hands"
+import { useSigner } from "@/hooks/useSigner";
+import { useEffect, useState } from "react";
 
 interface SignedOutProps {
   csrfToken: Auth['csrfToken']
@@ -60,11 +63,15 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
   const githubLinked = session.user?.linkedAccounts?.['github']
   const twitterLinked = session.user?.linkedAccounts?.['twitter']
   const diamondHands = isDiamondHands(session.user?.sub)
-  const {
-    isPending: sendingTransaction,
-    data: transactionHash,
-    writeContract
-  } = useWriteContract()
+  const signer = useSigner()
+  const [proxy, setProxy] = useState<EIP712Proxy | null>(null)
+
+  useEffect(() => {
+    if (signer) {
+      setProxy(new EIP712Proxy(PROXY_CONTRACT_ADDRESS, { signer: signer }))
+    }
+  }, [signer])
+
 
   const attestMutation = useMutation({
     mutationFn: async () => {
@@ -72,10 +79,25 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
         method: 'POST'
       })
       const data = await res.json()
-      const message = jsonParseBigInt(data.signedMessage)
-      // now need to translate "message" into a writeContract call to the proxy:
-      // reference: https://wagmi.sh/react/guides/write-to-contract
-      console.log('SIGNED TRANSACTION', message)
+      const response = jsonParseBigInt(data.signedResponse)
+      if (!proxy) {
+        // TODO use toast or something similar to report an error, though I think we should never reach this point
+        console.error('not connected!')
+        return
+      }
+
+      const tx = await proxy.attestByDelegationProxy({
+        schema: response.message.schema,
+        data: {
+          recipient: response.message.recipient,
+          data: response.message.data,
+          revocable: response.message.revocable,
+        },
+        attester: response.message.attester,
+        signature: response.signature,
+      })
+
+      await tx.wait();
     }
   })
 
