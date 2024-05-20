@@ -5,7 +5,7 @@ import { SiweMessage } from "siwe";
 import { ConnectKitButton } from 'connectkit';
 import { EIP712Proxy } from "@ethereum-attestation-service/eas-sdk/dist/eip712-proxy";
 import type { Address, Chain } from 'viem'
-import { useAccount, useSignMessage, useWriteContract } from "wagmi"
+import { useAccount, useSignMessage } from "wagmi"
 import { Button } from "@/components/ui/button"
 import { jsonParseBigInt } from "@/lib/utils"
 
@@ -67,7 +67,6 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
   const signer = useSigner()
   const [proxy, setProxy] = useState<EIP712Proxy | null>(null)
   const isAttested = useIsAttested(session.user?.sub)
-  console.log('IS ATTESTED', isAttested)
 
   useEffect(() => {
     if (signer) {
@@ -89,7 +88,6 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
         return
       }
 
-      debugger
       const tx = await proxy.attestByDelegationProxy({
         schema: response.message.schema,
         data: {
