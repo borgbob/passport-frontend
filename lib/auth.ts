@@ -111,11 +111,14 @@ export const config: NextAuthConfig = {
       }
 
       if (account?.provider === 'credentials') {
+        console.log('LOGGING WITH ETHEREUM')
         // logging in with ethereum
         return token
       }
 
       const provider = account?.provider
+      console.log('ACCOUNT', account)
+      console.log('PROVIDER', account?.provider)
       if (!provider) {
         return token
       }
