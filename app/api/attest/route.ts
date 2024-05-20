@@ -27,8 +27,6 @@ function getWalletAddress(session: any) {
   return session.user.sub
 }
 
-const isAttested = false
-
 export async function POST(req: NextRequest) {
   const walletAddress = getWalletAddress(await auth())
 
@@ -40,18 +38,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'User is not diamond hands' }, { status: 400 })
   }
 
-  // TODO: Replace this with a call to the blockchain to check if the user
-  // has already attested
-  if (isAttested) {
-    return NextResponse.json({ isAttested: true })
-  }
-
   const provider = new JsonRpcProvider()
   const signer = new Wallet(PRIVATE_KEY, provider);
 
   const proxy = new EIP712Proxy(PROXY_CONTRACT_ADDRESS, { signer: signer })
 
-  //const nonce = await eas.getNonce(signer.address)
   const delegated = await proxy.getDelegated()
 
   const params = {

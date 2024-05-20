@@ -14,6 +14,7 @@ import { PROXY_CONTRACT_ADDRESS } from "@/lib/config"
 import { isDiamondHands } from "@/lib/diamond-hands"
 import { useSigner } from "@/hooks/useSigner";
 import { useEffect, useState } from "react";
+import { useIsAttested } from "@/hooks/useIsAttested";
 
 interface SignedOutProps {
   csrfToken: Auth['csrfToken']
@@ -65,6 +66,8 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
   const diamondHands = isDiamondHands(session.user?.sub)
   const signer = useSigner()
   const [proxy, setProxy] = useState<EIP712Proxy | null>(null)
+  const isAttested = useIsAttested(session.user?.sub)
+  console.log('IS ATTESTED', isAttested)
 
   useEffect(() => {
     if (signer) {
@@ -86,6 +89,7 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
         return
       }
 
+      debugger
       const tx = await proxy.attestByDelegationProxy({
         schema: response.message.schema,
         data: {
@@ -155,9 +159,10 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
           <Image src={`/diamond.png`} alt={`Is diamond hands`} width={75} height={75} />
           {diamondHands ? (
             <><p>You have diamond hands!</p>
+              {isAttested ? <p>Already attested</p> :
               <Button type="button" onClick={() => {
                 attestMutation.mutate()
-              }}>Attest</Button></>
+              }}>Attest</Button>}</>
           ) : (
             <p>You do not have diamond hands</p>)}
         </div>
