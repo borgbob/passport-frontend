@@ -111,20 +111,24 @@ export const config: NextAuthConfig = {
       }
 
       if (account?.provider === 'credentials') {
-        console.log('LOGGING WITH ETHEREUM')
         // logging in with ethereum
         return token
       }
 
       const provider = account?.provider
-      console.log('ACCOUNT', account)
-      console.log('PROVIDER', account?.provider)
       if (!provider) {
         return token
       }
 
       // TODO refactor to use a configurable cookie name
-      const sessionCookie = cookies().get(SESSION_COOKIE_NAME)?.value
+      const sessionCookie = (() => {
+        const insecureCookie = cookies().get(SESSION_COOKIE_NAME)?.value
+        if (insecureCookie) {
+          return insecureCookie
+        }
+        return cookies().get(`__Secure-${SESSION_COOKIE_NAME}`)?.value
+      })()
+
       if (!sessionCookie) {
         console.warn('No session cookie found')
         return token
