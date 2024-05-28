@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'User is not diamond hands' }, { status: 400 })
   }
 
-  const provider = new JsonRpcProvider()
+  const provider = new JsonRpcProvider('https://avalanche-fuji-c-chain-rpc.publicnode.com/')
   const signer = new Wallet(PRIVATE_KEY, provider);
 
   const proxy = new EIP712Proxy(PROXY_CONTRACT_ADDRESS, { signer: signer })
