@@ -1,8 +1,8 @@
 import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
 import type { Address } from 'viem'
-import { Chain as ViemChain, avalanche, avalancheFuji, hardhat } from 'viem/chains';
+import { Chain as ViemChain, avalancheFuji, hardhat } from 'viem/chains';
 const supportedChains = [
-  avalanche,
+  // avalanche,
   avalancheFuji
 ] as ViemChain[]
 
