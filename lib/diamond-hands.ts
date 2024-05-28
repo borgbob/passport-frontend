@@ -9,5 +9,9 @@ const devDiamondHands: Address[] = [
 const diamondHands = new Set(process.env.NODE_ENV === 'production' ? prodDiamondHands : devDiamondHands)
 
 export function isDiamondHands(address: Address) {
-  return diamondHands.has(address)
+  console.log('Diamond hands count', diamondHands.size)
+  console.log('Checking if ', address, ' is diamond hands')
+  const result = diamondHands.has(address)
+  console.log('Result: ', result)
+  return result
 }
