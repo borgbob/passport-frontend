@@ -18,11 +18,9 @@ export const WALLETCONNECT_PROJECT_ID = process.env.NEXT_PUBLIC_WALLETCONNECT_PR
 export const PROXY_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_PROXY_CONTRACT_ADDRESS! as Address;
 export const PRIVATE_KEY = process.env.PRIVATE_KEY!;
 
-// This is actually the GM schema. If schema UIDs are deterministic, then we can probably hardcode the diamond hands schema uid here.
-export const DIAMOND_HANDS_SCHEMA_UID = '0x9d4827e0ceb1e39f6f197590f97d841f0386544ae59070cba10025be0b5db971'
+export const DIAMOND_HANDS_SCHEMA_UID = '0x2453f5ceb545822684adba2d870fb52eab550b31e5d4071ba084e0940c7f6d30'
 
 // make things more efficient by encoding attestation data here once
-
 const encoder = new SchemaEncoder('bool hasDiamondHand')
 export const DIAMOND_HANDS_ATTESTATION_DATA = encoder.encodeData([{
   name: 'hasDiamondHand',
