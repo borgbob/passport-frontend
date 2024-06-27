@@ -7,9 +7,9 @@ import { jsonStringifyBigInt } from "@/lib/utils"
 
 import {
   PROXY_CONTRACT_ADDRESS,
-  PRIVATE_KEY,
   DIAMOND_HANDS_SCHEMA_UID,
-  DIAMOND_HANDS_ATTESTATION_DATA
+  DIAMOND_HANDS_ATTESTATION_DATA,
+  isProd
 } from "@/lib/config"
 
 
@@ -17,9 +17,17 @@ if (!PROXY_CONTRACT_ADDRESS) {
   throw new Error('PROXY_CONTRACT_ADDRESS is not set')
 }
 
-if (!PRIVATE_KEY) {
-  throw new Error('PRIVATE_KEY is not set')
-}
+const PRIVATE_KEY = process.env.PRIVATE_KEY!;
+
+const JSON_RPC_ENDPOINT = (() => {
+  if (process.env.JSON_RPC_ENDPOINT) {
+    return process.env.JSON_RPC_ENDPOINT;
+  }
+
+  if (isProd) {
+    return 'https://avalanche-fuji-c-chain-rpc.publicnode.com/';
+  }
+})();
 
 export const runtime = "edge";
 
@@ -38,7 +46,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'User is not diamond hands' }, { status: 400 })
   }
 
-  const provider = new JsonRpcProvider('https://avalanche-fuji-c-chain-rpc.publicnode.com/')
+  const provider = new JsonRpcProvider(JSON_RPC_ENDPOINT)
   const signer = new Wallet(PRIVATE_KEY, provider);
 
   const proxy = new EIP712Proxy(PROXY_CONTRACT_ADDRESS, { signer: signer })
