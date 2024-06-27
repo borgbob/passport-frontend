@@ -3,7 +3,9 @@ import {
   useQuery,
   useQueryClient
 } from '@tanstack/react-query'
-
+import { SiweMessage } from "siwe";
+import type { Address, Chain } from 'viem'
+import { useSignMessage } from "wagmi"
 
 interface Credentials {
   message: string
@@ -14,6 +16,7 @@ export type Auth = ReturnType<typeof useAuth>
 
 export function useAuth() {
   const queryClient = useQueryClient();
+  const { signMessageAsync } = useSignMessage()
 
   function invalidateSession() {
     queryClient.invalidateQueries({
@@ -38,7 +41,7 @@ export function useAuth() {
     },
   })
 
-  const signInMutation = useMutation({
+  const { mutateAsync: signIn } = useMutation({
     mutationKey: ['signIn', csrfTokenQuery.data],
     mutationFn: async (credentials: Credentials) => {
       const formData = new URLSearchParams()
@@ -54,7 +57,7 @@ export function useAuth() {
     onSuccess: invalidateSession
   });
 
-  const signOutMutation = useMutation({
+  const { mutateAsync: signOut } = useMutation({
     mutationKey: ['signOut', csrfTokenQuery.data],
     mutationFn: async () => {
       const formData = new URLSearchParams()
@@ -67,17 +70,31 @@ export function useAuth() {
     onSuccess: invalidateSession
   });
 
-  function signIn(credentials: Credentials) {
-    return signInMutation.mutate(credentials)
-  }
+  async function handleSignIn(address: Address, chain: Chain, csrfToken: string) {
+    if (!csrfToken) {
+      return;
+    }
 
-  function signOut() {
-    return signOutMutation.mutate()
+    const message = new SiweMessage({
+      domain: window.location.host,
+      address: address,
+      statement: "Sign in with Ethereum",
+      uri: window.location.origin,
+      version: "1",
+      chainId: chain?.id,
+      nonce: csrfToken,
+    })
+
+    const signature = await signMessageAsync({
+      message: message.prepareMessage()
+    })
+
+    signIn({ message: JSON.stringify(message), signature })
   }
 
   return {
     session: sessionQuery.data,
-    signIn,
+    signIn: handleSignIn,
     signOut,
     csrfToken: csrfTokenQuery.data
   }

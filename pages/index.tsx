@@ -1,12 +1,11 @@
 import { useAuth, type Auth } from "@/hooks/useAuth";
 import { useMutation } from '@tanstack/react-query';
-import Image from 'next/image'
-import { SiweMessage } from "siwe";
-import { ConnectKitButton } from 'connectkit';
 import { EIP712Proxy } from "@ethereum-attestation-service/eas-sdk/dist/eip712-proxy";
-import type { Address, Chain } from 'viem'
-import { useAccount, useSignMessage } from "wagmi"
 import { Button } from "@/components/ui/button"
+import { AttestCard } from "@/components/attest-card"
+import { AttestCardSocialConnection } from "@/components/attest-card-social-connection"
+import { Header } from "@/components/header"
+import { ConnectHeader } from "@/components/connect-header"
 import { jsonParseBigInt } from "@/lib/utils"
 
 import { PROXY_CONTRACT_ADDRESS } from "@/lib/config"
@@ -18,57 +17,20 @@ import { useIsAttested } from "@/hooks/useIsAttested";
 import { ethers } from 'ethers';
 import { getProxy } from '@/lib/proxy';
 
-interface SignedOutProps {
-  csrfToken: Auth['csrfToken']
-  signIn: Auth['signIn']
-  address?: Address
-  chain?: Chain
-  signMessageAsync: ReturnType<typeof useSignMessage>['signMessageAsync']
-}
-
-function SignedOut({ csrfToken, signIn, address, chain, signMessageAsync }: SignedOutProps) {
-  async function handleSignIn() {
-    if (!csrfToken || !address) {
-      return;
-    }
-
-    const message = new SiweMessage({
-      domain: window.location.host,
-      address: address,
-      statement: "Sign in with Ethereum",
-      uri: window.location.origin,
-      version: "1",
-      chainId: chain?.id,
-      nonce: csrfToken,
-    })
-
-    const signature = await signMessageAsync({
-      message: message.prepareMessage()
-    })
-
-    signIn({ message: JSON.stringify(message), signature })
-  }
-
-  return (
-    <Button type="button" onClick={() => {
-      handleSignIn()
-    }}>Login</Button>
-  )
-}
-
 interface SignedInProps {
-  session: NonNullable<Auth['session']>
+  session: Auth['session']
   csrfToken: Auth['csrfToken']
   signOut: Auth['signOut']
 }
 
-function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
-  const githubLinked = session.user?.linkedAccounts?.['github']
-  const twitterLinked = session.user?.linkedAccounts?.['twitter']
-  const diamondHands = isDiamondHands(session.user?.sub)
+function Main({ session, csrfToken }: SignedInProps) {
+  const userName = session?.user?.userName ?? 'Anonymous';
+  const githubLinked = session?.user?.linkedAccounts?.['github']
+  const twitterLinked = session?.user?.linkedAccounts?.['twitter']
+  const diamondHands = session?.user?.sub && isDiamondHands(session.user?.sub)
   const signer = useSigner()
-  const [proxy, setProxy] = useState<ethers.Contract| null>(null)
-  const isAttested = useIsAttested(session.user?.sub)
+  const [proxy, setProxy] = useState<EIP712Proxy | null>(null)
+  const isAttested = useIsAttested(session?.user?.sub)
 
   useEffect(() => {
     if (signer) {
@@ -135,69 +97,50 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
   }
 
   return (
-    <div className="flex flex-col items-center">
-      <Button type="button" onClick={() => {
-        signOut()
-      }}>Logout</Button>
+    <>
+      <Header
+        userName={userName}
+        isConnected={true}
+        walletAddress={session?.user?.sub}
+        score={totalPoints} />
+      <div className="flex flex-wrap justify-between items-center">
 
-      <h1 className="text-2xl font-semibold mt-5">{session.user?.sub} (total points: {totalPoints})</h1>
-
-      <div className="flex flex-wrap mt-10">
-
-        {socialConnections.map(({ name, linked, connectUrl, description, connectedDescription, buttonLabel }) => (
-          <div key={name} className="mr-10 mt-10 flex flex-col items-center justify-between bg-gray-100 border rounded-sm p-5 w-[300px] h-[200px]">
-            <Image src={`/${name}.png`} alt={`${name} connection`} width={75} height={75} />
-            {linked ? (
-              <p>{connectedDescription}</p>) : (<>
-                <p>{description}</p>
-                <form action={connectUrl} method="post">
-                  <input type="hidden" name="csrfToken" value={csrfToken} />
-                  <input type="hidden" name="callbackUrl" value={window.location.origin} />
-                  <Button type="submit">{buttonLabel}</Button>
-                </form></>)}
-          </div>
+        {socialConnections.map((props) => (
+          <AttestCardSocialConnection key={props.name} {...props} csrfToken={csrfToken} />
         ))}
-        <div className="mr-10 mt-10 flex flex-col items-center justify-between bg-gray-100 border rounded-sm p-5 w-[300px] h-[200px]">
-          <Image src={`/diamond.png`} alt={`Is diamond hands`} width={75} height={75} />
+        <AttestCard name="diamond">
           {diamondHands ? (
             <><p>You have diamond hands!</p>
               {isAttested ? <p>Already attested</p> :
-              <Button type="button" onClick={() => {
-                attestMutation.mutate()
-              }}>Attest</Button>}</>
+                <Button variant="passport" type="button" onClick={() => {
+                  attestMutation.mutate()
+                }}>Attest</Button>}</>
           ) : (
             <p>You do not have diamond hands</p>)}
-        </div>
+        </AttestCard>
       </div>
-    </div>
+    </>
   )
 }
 
 export default function Home() {
-  const { signMessageAsync } = useSignMessage()
   const { session, csrfToken, signIn, signOut } = useAuth()
-  const { address, chain, isConnected } = useAccount()
 
   return (
     <main className="flex flex-col items-center justify-between pt-5">
+      <div className="w-[1024px]">
+        <ConnectHeader
+          signedIn={!!session}
+          csrfToken={csrfToken}
+          onSignIn={signIn}
+          onSignOut={signOut} />
 
-      {!isConnected ? (
-        <div>
-          <ConnectKitButton />
-        </div>
-      ) : session ?
-        <SignedIn
+        <Main
           csrfToken={csrfToken}
           session={session}
           signOut={signOut}
-        /> :
-        <SignedOut
-          csrfToken={csrfToken}
-          signIn={signIn}
-          address={address}
-          chain={chain}
-          signMessageAsync={signMessageAsync}
-        />}
+        />
+      </div>
     </main>
   );
 }
