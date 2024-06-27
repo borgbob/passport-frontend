@@ -6,6 +6,7 @@ import Github from "next-auth/providers/github";
 import Twitter from "next-auth/providers/twitter";
 import { SiweMessage } from "siwe";
 import { cookies } from "next/headers";
+import { generate } from 'random-words';
 
 // Environment variables required here:
 //
@@ -111,8 +112,18 @@ export const config: NextAuthConfig = {
       }
 
       if (account?.provider === 'credentials') {
+        const userName = generate({
+          exactly: 3,
+          join: ' ',
+          seed: token.sub,
+          // capitalize words
+          formatter: (word) => word.charAt(0).toUpperCase() + word.slice(1)
+        })
         // logging in with ethereum
-        return token
+        return {
+          ...token,
+          userName,
+        }
       }
 
       const provider = account?.provider

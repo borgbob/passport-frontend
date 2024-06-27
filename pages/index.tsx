@@ -1,12 +1,15 @@
 import { useAuth, type Auth } from "@/hooks/useAuth";
 import { useMutation } from '@tanstack/react-query';
-import Image from 'next/image'
 import { SiweMessage } from "siwe";
 import { ConnectKitButton } from 'connectkit';
 import { EIP712Proxy } from "@ethereum-attestation-service/eas-sdk/dist/eip712-proxy";
 import type { Address, Chain } from 'viem'
 import { useAccount, useSignMessage } from "wagmi"
 import { Button } from "@/components/ui/button"
+import { AttestCard } from "@/components/attest-card"
+import { AttestCardSocialConnection } from "@/components/attest-card-social-connection"
+import { Header } from "@/components/header"
+import { ConnectHeader } from "@/components/connect-header"
 import { jsonParseBigInt } from "@/lib/utils"
 
 import { PROXY_CONTRACT_ADDRESS } from "@/lib/config"
@@ -61,9 +64,10 @@ interface SignedInProps {
 }
 
 function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
+  const userName = session.user?.userName ?? 'Anonymous';
   const githubLinked = session.user?.linkedAccounts?.['github']
   const twitterLinked = session.user?.linkedAccounts?.['twitter']
-  const diamondHands = isDiamondHands(session.user?.sub)
+  const diamondHands = session.user?.sub && isDiamondHands(session.user?.sub)
   const signer = useSigner()
   const [proxy, setProxy] = useState<EIP712Proxy | null>(null)
   const isAttested = useIsAttested(session.user?.sub)
@@ -131,39 +135,32 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
   }
 
   return (
-    <div className="flex flex-col items-center">
-      <Button type="button" onClick={() => {
-        signOut()
-      }}>Logout</Button>
+    <div className="">
+      <div className="pl-5 pr-5 mt-5">
+        <ConnectHeader
+          isConnected={true}
+          onSignOut={signOut} />
+        <Header
+          userName={userName}
+          isConnected={true}
+          walletAddress={session.user?.sub}
+          score={totalPoints} />
+      </div>
+      <div className="flex flex-wrap justify-between items-center w-[1024px] pl-5 pr-5">
 
-      <h1 className="text-2xl font-semibold mt-5">{session.user?.sub} (total points: {totalPoints})</h1>
-
-      <div className="flex flex-wrap mt-10">
-
-        {socialConnections.map(({ name, linked, connectUrl, description, connectedDescription, buttonLabel }) => (
-          <div key={name} className="mr-10 mt-10 flex flex-col items-center justify-between bg-gray-100 border rounded-sm p-5 w-[300px] h-[200px]">
-            <Image src={`/${name}.png`} alt={`${name} connection`} width={75} height={75} />
-            {linked ? (
-              <p>{connectedDescription}</p>) : (<>
-                <p>{description}</p>
-                <form action={connectUrl} method="post">
-                  <input type="hidden" name="csrfToken" value={csrfToken} />
-                  <input type="hidden" name="callbackUrl" value={window.location.origin} />
-                  <Button type="submit">{buttonLabel}</Button>
-                </form></>)}
-          </div>
+        {socialConnections.map((props) => (
+          <AttestCardSocialConnection key={props.name} {...props} csrfToken={csrfToken} />
         ))}
-        <div className="mr-10 mt-10 flex flex-col items-center justify-between bg-gray-100 border rounded-sm p-5 w-[300px] h-[200px]">
-          <Image src={`/diamond.png`} alt={`Is diamond hands`} width={75} height={75} />
+        <AttestCard name="diamond">
           {diamondHands ? (
             <><p>You have diamond hands!</p>
               {isAttested ? <p>Already attested</p> :
-              <Button type="button" onClick={() => {
-                attestMutation.mutate()
-              }}>Attest</Button>}</>
+                <Button variant="passport" type="button" onClick={() => {
+                  attestMutation.mutate()
+                }}>Attest</Button>}</>
           ) : (
             <p>You do not have diamond hands</p>)}
-        </div>
+        </AttestCard>
       </div>
     </div>
   )
