@@ -1,6 +1,13 @@
 import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
 import type { Address } from 'viem'
 import { Chain as ViemChain, avalanche, avalancheFuji, hardhat } from 'viem/chains';
+
+export const redisConf = {
+    host: process.env.REDIS_HOST,
+	port: process.env.REDIS_PORT,
+	password: process.env.REDIS_PASSWORD,
+}
+
 const supportedChains = [
   avalanche,
   avalancheFuji
