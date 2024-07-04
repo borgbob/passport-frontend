@@ -1,17 +1,15 @@
-import Redis, {RedisOptions} from 'ioredis';
-import {redisConf} from '@/lib/config';
+import Redis, { RedisOptions } from "ioredis";
+import { redisConf } from "@/lib/config";
 
 function getRedisConfiguration(): {
-  host?: string,
-  port?: string,
-  password?: string
+  host?: string;
+  port?: string;
+  password?: string;
 } {
   return redisConf;
 }
 
-export function getRedisInstance(
-  config = getRedisConfiguration()
-) {
+export function getRedisInstance(config = getRedisConfiguration()) {
   try {
     const options: RedisOptions = {
       host: config.host,
@@ -34,15 +32,13 @@ export function getRedisInstance(
     if (config.password) {
       options.password = config.password;
     }
-	const redis = new Redis(options);
+    const redis = new Redis(options);
 
-    redis.on('error', (error: unknown) => {
+    redis.on("error", (error: unknown) => {
       console.warn(`[Redis] error connecting`, error);
     });
     return redis;
-
   } catch (e) {
     throw new Error(`[Redis] could not create new instance`);
   }
-
 }

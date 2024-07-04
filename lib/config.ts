@@ -3,10 +3,12 @@ import type { Address } from 'viem'
 import { Chain as ViemChain, avalanche, avalancheFuji, hardhat } from 'viem/chains';
 
 export const redisConf = {
-    host: process.env.REDIS_HOST,
-	port: process.env.REDIS_PORT,
-	password: process.env.REDIS_PASSWORD,
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  password: process.env.REDIS_PASSWORD,
 }
+
+export const ATTESTATION_DEADLINE = 60 * 5;
 
 const supportedChains = [
   avalanche,
