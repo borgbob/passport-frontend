@@ -7,6 +7,7 @@ export type ConnectHeaderProps = {
   isConnecting: boolean
   showConnectModal: () => void
   signedIn: boolean
+  disconnectWallet: () => void
   onSignIn: () => void
   onSignOut: () => void
 }
@@ -15,21 +16,27 @@ export const ConnectHeader: FC<ConnectHeaderProps> = ({
   isConnected,
   isConnecting,
   showConnectModal,
+  disconnectWallet,
   signedIn,
   onSignIn,
   onSignOut
 }) => {
+  debugger
   const [signingIn, setSigningIn] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
 
   useEffect(() => {
+    debugger
     if (isConnected) {
       setSigningIn(true)
+    } else {
+      setSigningOut(true)
     }
-  }, [isConnected])
+  }, [isConnected, onSignOut])
 
   useEffect(() => {
     if (signingIn) {
+      debugger
       setSigningIn(false)
       onSignIn()
     }
@@ -56,8 +63,8 @@ export const ConnectHeader: FC<ConnectHeaderProps> = ({
   }, [isConnected, isConnecting])
 
   const signOut = useCallback(() => {
-    setSigningOut(true)
-  }, [])
+    disconnectWallet()
+  }, [disconnectWallet])
 
   return (
     <div className="flex flex-row justify-between items-center mb-5">
@@ -74,10 +81,10 @@ export const ConnectHeader: FC<ConnectHeaderProps> = ({
             Logout
           </Button>
         ) || (
-            <Button disabled={isConnecting} variant="passport" className="pl-20 pr-20" type="button" onClick={signIn}>
-              Login
-            </Button>
-          )}
+          <Button disabled={isConnecting} variant="passport" className="pl-20 pr-20" type="button" onClick={signIn}>
+            Login
+          </Button>
+        )}
       </div>
     </div>
   )
