@@ -4,7 +4,6 @@ import {
   useQueryClient
 } from '@tanstack/react-query'
 
-
 interface Credentials {
   message: string
   signature: string
@@ -38,7 +37,7 @@ export function useAuth() {
     },
   })
 
-  const signInMutation = useMutation({
+  const { mutateAsync: signIn } = useMutation({
     mutationKey: ['signIn', csrfTokenQuery.data],
     mutationFn: async (credentials: Credentials) => {
       const formData = new URLSearchParams()
@@ -54,7 +53,7 @@ export function useAuth() {
     onSuccess: invalidateSession
   });
 
-  const signOutMutation = useMutation({
+  const { mutateAsync: signOut } = useMutation({
     mutationKey: ['signOut', csrfTokenQuery.data],
     mutationFn: async () => {
       const formData = new URLSearchParams()
@@ -66,14 +65,6 @@ export function useAuth() {
     },
     onSuccess: invalidateSession
   });
-
-  function signIn(credentials: Credentials) {
-    return signInMutation.mutate(credentials)
-  }
-
-  function signOut() {
-    return signOutMutation.mutate()
-  }
 
   return {
     session: sessionQuery.data,

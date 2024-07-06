@@ -1,2 +1,0 @@
-- JsonRpcProvider endpoint should be configurable
-- Only one chain should be supported, and configured via env var
