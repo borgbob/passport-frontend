@@ -3,6 +3,9 @@ import {
   useQuery,
   useQueryClient
 } from '@tanstack/react-query'
+import { SiweMessage } from "siwe";
+import type { Address, Chain } from 'viem'
+import { useSignMessage } from "wagmi"
 
 interface Credentials {
   message: string
@@ -13,6 +16,7 @@ export type Auth = ReturnType<typeof useAuth>
 
 export function useAuth() {
   const queryClient = useQueryClient();
+  const { signMessageAsync } = useSignMessage()
 
   function invalidateSession() {
     queryClient.invalidateQueries({
@@ -66,9 +70,31 @@ export function useAuth() {
     onSuccess: invalidateSession
   });
 
+  async function handleSignIn(address: Address, chain: Chain, csrfToken: string) {
+    if (!csrfToken) {
+      return;
+    }
+
+    const message = new SiweMessage({
+      domain: window.location.host,
+      address: address,
+      statement: "Sign in with Ethereum",
+      uri: window.location.origin,
+      version: "1",
+      chainId: chain?.id,
+      nonce: csrfToken,
+    })
+
+    const signature = await signMessageAsync({
+      message: message.prepareMessage()
+    })
+
+    signIn({ message: JSON.stringify(message), signature })
+  }
+
   return {
     session: sessionQuery.data,
-    signIn,
+    signIn: handleSignIn,
     signOut,
     csrfToken: csrfTokenQuery.data
   }

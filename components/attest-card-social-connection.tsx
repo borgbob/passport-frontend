@@ -23,6 +23,13 @@ export const AttestCardSocialConnection: FC<AttestCardSocialConnectionProps> = (
   buttonLabel,
   csrfToken
 }) => {
+  const callbackUrl = (() => {
+    if (typeof window === 'undefined') {
+      return ''
+    }
+    return window.location.origin
+  })()
+
   return (
     <AttestCard name={name}>
       {linked ? (
@@ -30,7 +37,7 @@ export const AttestCardSocialConnection: FC<AttestCardSocialConnectionProps> = (
           <p>{description}</p>
           <form action={connectUrl} method="post">
             <input type="hidden" name="csrfToken" value={csrfToken} />
-            <input type="hidden" name="callbackUrl" value={window.location.origin} />
+            <input type="hidden" name="callbackUrl" value={callbackUrl} />
             <Button variant="passport" type="submit">{buttonLabel}</Button>
           </form></>)}
     </AttestCard>

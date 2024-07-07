@@ -1,10 +1,6 @@
 import { useAuth, type Auth } from "@/hooks/useAuth";
 import { useMutation } from '@tanstack/react-query';
-import { SiweMessage } from "siwe";
-import { ConnectKitButton } from 'connectkit';
 import { EIP712Proxy } from "@ethereum-attestation-service/eas-sdk/dist/eip712-proxy";
-import type { Address, Chain } from 'viem'
-import { useDisconnect, useSignMessage } from "wagmi"
 import { Button } from "@/components/ui/button"
 import { AttestCard } from "@/components/attest-card"
 import { AttestCardSocialConnection } from "@/components/attest-card-social-connection"
@@ -16,7 +12,7 @@ import { PROXY_CONTRACT_ADDRESS } from "@/lib/config"
 
 import { isDiamondHands } from "@/lib/diamond-hands"
 import { useSigner } from "@/hooks/useSigner";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useIsAttested } from "@/hooks/useIsAttested";
 
 interface SignedInProps {
@@ -124,65 +120,23 @@ function Main({ session, csrfToken }: SignedInProps) {
 }
 
 export default function Home() {
-  const { signMessageAsync } = useSignMessage()
   const { session, csrfToken, signIn, signOut } = useAuth()
-  const { disconnect } = useDisconnect()
-
-  const handleSignIn = useCallback(async function handleSignIn(address: Address, chain: Chain) {
-    if (!csrfToken || !address) {
-      return;
-    }
-
-    const message = new SiweMessage({
-      domain: window.location.host,
-      address: address,
-      statement: "Sign in with Ethereum",
-      uri: window.location.origin,
-      version: "1",
-      chainId: chain?.id,
-      nonce: csrfToken,
-    })
-
-    const signature = await signMessageAsync({
-      message: message.prepareMessage()
-    })
-
-    signIn({ message: JSON.stringify(message), signature })
-  }, [csrfToken, signIn, signMessageAsync])
-
-  const handleSignOut = useCallback(function handleSignOut() {
-    signOut()
-  }, [signOut])
 
   return (
-    <ConnectKitButton.Custom>
-      {({ isConnected, isConnecting, show, hide, address, ensName, chain }) => {
-        return (
+    <main className="flex flex-col items-center justify-between pt-5">
+      <div className="w-[1024px]">
+        <ConnectHeader
+          signedIn={!!session}
+          csrfToken={csrfToken}
+          onSignIn={signIn}
+          onSignOut={signOut} />
 
-          <main className="flex flex-col items-center justify-between pt-5">
-            <div className="w-[1024px]">
-              <ConnectHeader
-                isConnected={isConnected}
-                isConnecting={isConnecting}
-                showConnectModal={show ?? (() => undefined)}
-                disconnectWallet={disconnect}
-                signedIn={!!session}
-                onSignIn={() => {
-                  if (address && chain) {
-                    handleSignIn(address, chain)
-                  }
-                }}
-                onSignOut={handleSignOut} />
-
-              <Main
-                csrfToken={csrfToken}
-                session={session}
-                signOut={signOut}
-              />
-            </div>
-          </main>
-        )
-      }}
-    </ConnectKitButton.Custom>
+        <Main
+          csrfToken={csrfToken}
+          session={session}
+          signOut={signOut}
+        />
+      </div>
+    </main>
   );
 }
