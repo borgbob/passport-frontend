@@ -15,6 +15,8 @@ import { isDiamondHands } from "@/lib/diamond-hands"
 import { useSigner } from "@/hooks/useSigner";
 import { useEffect, useState } from "react";
 import { useIsAttested } from "@/hooks/useIsAttested";
+import { ethers } from 'ethers';
+import { getProxy } from '@/lib/proxy';
 
 interface SignedOutProps {
   csrfToken: Auth['csrfToken']
@@ -65,12 +67,12 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
   const twitterLinked = session.user?.linkedAccounts?.['twitter']
   const diamondHands = isDiamondHands(session.user?.sub)
   const signer = useSigner()
-  const [proxy, setProxy] = useState<EIP712Proxy | null>(null)
+  const [proxy, setProxy] = useState<ethers.Contract| null>(null)
   const isAttested = useIsAttested(session.user?.sub)
 
   useEffect(() => {
     if (signer) {
-      setProxy(new EIP712Proxy(PROXY_CONTRACT_ADDRESS, { signer: signer }))
+      setProxy(getProxy(signer));
     }
   }, [signer])
 
@@ -87,18 +89,22 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
         console.error('not connected!')
         return
       }
-
-      const tx = await proxy.attestByDelegationProxy({
+      const tx = await proxy.attestByDelegation(
+        'diamond-hand', {
         schema: response.message.schema,
         data: {
           recipient: response.message.recipient,
           data: response.message.data,
           revocable: response.message.revocable,
+          expirationTime: 0,
+          refUID: ethers.ZeroHash,
+          value: 0,
         },
         attester: response.message.attester,
         signature: response.signature,
+        deadline: response.message.deadline,
       })
-
+      console.log(tx);
       await tx.wait();
     }
   })

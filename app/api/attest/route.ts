@@ -8,8 +8,7 @@ import { jsonStringifyBigInt } from "@/lib/utils"
 import {
   PROXY_CONTRACT_ADDRESS,
   PRIVATE_KEY,
-  DIAMOND_HANDS_SCHEMA_UID,
-  DIAMOND_HANDS_ATTESTATION_DATA
+  ATTESTATION_CONFIG,
 } from "@/lib/config"
 
 
@@ -38,20 +37,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'User is not diamond hands' }, { status: 400 })
   }
 
-  const provider = new JsonRpcProvider('https://avalanche-fuji-c-chain-rpc.publicnode.com/')
+  const provider = new JsonRpcProvider(process.env.RPC_PROVIDER)
   const signer = new Wallet(PRIVATE_KEY, provider);
 
   const proxy = new EIP712Proxy(PROXY_CONTRACT_ADDRESS, { signer: signer })
 
   const delegated = await proxy.getDelegated()
 
+  const attestationType = ATTESTATION_CONFIG['diamond-hand'];
+
   const params = {
-    schema: DIAMOND_HANDS_SCHEMA_UID,
+    schema: attestationType.schemaUID,
     recipient: walletAddress,
     expirationTime: 0n,
     revocable: false,
     refUID: '0x0000000000000000000000000000000000000000000000000000000000000000',
-    data: DIAMOND_HANDS_ATTESTATION_DATA,
+    data: attestationType.encoder.encodeData([{
+      name: 'hasDiamondHand',
+      type: 'bool',
+      value: true
+    }]),
     value: 0n,
     deadline: 0n
   };
