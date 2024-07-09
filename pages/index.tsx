@@ -86,7 +86,6 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
       const response = jsonParseBigInt(data.signedResponse)
       if (!proxy) {
         // TODO use toast or something similar to report an error, though I think we should never reach this point
-        console.error('not connected!')
         return
       }
       const tx = await proxy.attestByDelegation(
@@ -104,7 +103,6 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
         signature: response.signature,
         deadline: response.message.deadline,
       })
-      console.log(tx);
       await tx.wait();
     }
   })
