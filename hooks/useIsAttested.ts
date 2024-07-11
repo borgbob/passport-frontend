@@ -1,10 +1,7 @@
 import type { Address, PublicClient } from 'viem'
 import { usePublicClient } from 'wagmi'
 
-import {
-  PROXY_CONTRACT_ADDRESS,
-  DIAMOND_HANDS_SCHEMA_UID,
-} from "@/lib/config"
+import { PROXY_CONTRACT_ADDRESS } from "@/lib/config"
 import { useEffect, useState } from 'react';
 
 const abi = [
@@ -13,7 +10,7 @@ const abi = [
     name: "userAuthenticationCount",
     inputs: [
       { name: "user", type: "address", internalType: "address" },
-      { name: "schema", type: "bytes32", internalType: "bytes32" }
+      { name: "id", type: "string", internalType: "string" }
     ],
     outputs: [
       { name: "", type: "uint256", internalType: "uint256" }
@@ -25,19 +22,12 @@ const abi = [
     name: "userAuthentication",
     inputs: [
       { name: "user", type: "address", internalType: "address" },
-      { name: "schema", type: "bytes32", internalType: "bytes32" },
+      { name: "id", type: "string", internalType: "string" },
       { name: "idx", type: "uint256", internalType: "uint256" }
     ],
     outputs: [
-      {
-        name: "",
-        type: "tuple",
-        internalType: "struct PassportEIP712Proxy.AttestationRecord",
-        components: [
-          { name: "attestationId", type: "bytes32", internalType: "bytes32" },
-          { name: "isRevoked", type: "bool", internalType: "bool" }
-        ]
-      }],
+      { name: "", type: "bytes32", internalType: "bytes32" }
+    ],
     stateMutability: "view"
   }
 ] as const
@@ -47,7 +37,7 @@ async function check(client: PublicClient, address: Address) {
     address: PROXY_CONTRACT_ADDRESS,
     abi: abi,
     functionName: 'userAuthenticationCount',
-    args: [address, DIAMOND_HANDS_SCHEMA_UID],
+    args: [address, 'diamond-hand'],
   })
 
   if (!attestationCount) {
@@ -56,15 +46,13 @@ async function check(client: PublicClient, address: Address) {
 
   const attestationIds = [];
   for (let i = 0; i < attestationCount; i++) {
-    const { attestationId, isRevoked } = await client.readContract({
+    const attestationId = await client.readContract({
       address: PROXY_CONTRACT_ADDRESS,
       abi: abi,
       functionName: 'userAuthentication',
-      args: [address, DIAMOND_HANDS_SCHEMA_UID, BigInt(i)],
+      args: [address, 'diamond-hand', BigInt(i)],
     });
-    if (!isRevoked) {
-      attestationIds.push(attestationId);
-    }
+    attestationIds.push(attestationId);
   }
   return true;
 }
