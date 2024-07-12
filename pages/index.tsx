@@ -1,14 +1,11 @@
 import { useAuth, type Auth } from "@/hooks/useAuth";
 import { useMutation } from '@tanstack/react-query';
-import { EIP712Proxy } from "@ethereum-attestation-service/eas-sdk/dist/eip712-proxy";
 import { Button } from "@/components/ui/button"
 import { AttestCard } from "@/components/attest-card"
 import { AttestCardSocialConnection } from "@/components/attest-card-social-connection"
 import { Header } from "@/components/header"
 import { ConnectHeader } from "@/components/connect-header"
 import { jsonParseBigInt } from "@/lib/utils"
-
-import { PROXY_CONTRACT_ADDRESS } from "@/lib/config"
 
 import { isDiamondHands } from "@/lib/diamond-hands"
 import { useSigner } from "@/hooks/useSigner";
@@ -29,7 +26,7 @@ function Main({ session, csrfToken }: SignedInProps) {
   const twitterLinked = session?.user?.linkedAccounts?.['twitter']
   const diamondHands = session?.user?.sub && isDiamondHands(session.user?.sub)
   const signer = useSigner()
-  const [proxy, setProxy] = useState<EIP712Proxy | null>(null)
+  const [proxy, setProxy] = useState<ethers.Contract | null>(null)
   const isAttested = useIsAttested(session?.user?.sub)
 
   useEffect(() => {

@@ -7,7 +7,6 @@ import { jsonStringifyBigInt } from "@/lib/utils"
 
 import {
   PROXY_CONTRACT_ADDRESS,
-  PRIVATE_KEY,
   ATTESTATION_CONFIG,
   isProd
 } from "@/lib/config"
@@ -35,7 +34,7 @@ function getWalletAddress(session: any) {
   return session.user.sub
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   const walletAddress = getWalletAddress(await auth())
 
   if (!walletAddress) {
