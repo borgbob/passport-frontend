@@ -15,7 +15,7 @@ import { isDiamondHands } from "@/lib/diamond-hands"
 import { useSigner } from "@/hooks/useSigner";
 import { useEffect, useState } from "react";
 import { useIsAttested } from "@/hooks/useIsAttested";
-import { ethers } from 'ethers';
+import { ethers, Typed } from 'ethers';
 import { getProxy } from '@/lib/proxy';
 
 interface SignedOutProps {
@@ -68,7 +68,7 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
   const diamondHands = isDiamondHands(session.user?.sub)
   const signer = useSigner()
   const [proxy, setProxy] = useState<ethers.Contract| null>(null)
-  const isAttested = useIsAttested(session.user?.sub)
+  const isAttested = useIsAttested(session.user?.sub, 'diamond-hand')
 
   useEffect(() => {
     if (signer) {
@@ -88,22 +88,28 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
         // TODO use toast or something similar to report an error, though I think we should never reach this point
         return
       }
-      const tx = await proxy.attestByDelegation(
-        'diamond-hand', {
-        schema: response.message.schema,
-        data: {
-          recipient: response.message.recipient,
-          data: response.message.data,
-          revocable: response.message.revocable,
-          expirationTime: 0,
-          refUID: ethers.ZeroHash,
-          value: 0,
-        },
-        attester: response.message.attester,
-        signature: response.signature,
-        deadline: response.message.deadline,
-      })
-      await tx.wait();
+      try {
+        const tx = await proxy.attestByDelegation(
+          Typed.string('diamond-hand'), {
+          schema: response.message.schema,
+          data: {
+            recipient: response.message.recipient,
+            data: response.message.data,
+            revocable: response.message.revocable,
+            expirationTime: 0,
+            refUID: ethers.ZeroHash,
+            value: 0,
+          },
+          attester: response.message.attester,
+          signature: response.signature,
+          deadline: response.message.deadline,
+        })
+        await tx.wait();
+      } catch (err) {
+        // This shouldn't happen but ethers doesn't seem to like
+        // function overloading.
+        console.error(err)
+      }
     }
   })
 

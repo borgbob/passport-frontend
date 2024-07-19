@@ -1,4 +1,7 @@
 import type { Address } from 'viem'
+import { getProxy } from "@/lib/proxy";
+import { JsonRpcProvider, Wallet } from "ethers";
+
 
 import prodDiamondHands from './diamond-hands-data.json'
 const devDiamondHands: Address[] = [
@@ -10,4 +13,10 @@ const diamondHands = new Set(process.env.NODE_ENV === 'production' ? prodDiamond
 
 export function isDiamondHands(address: Address) {
   return diamondHands.has(address.toLowerCase())
+}
+
+export async function hasDiamondHand(address: Address) {
+  const provider = new JsonRpcProvider(process.env.RPC_PROVIDER)
+  const proxy = getProxy(undefined, provider);
+  return (await proxy.userAuthenticationCount(address, 'diamond-hand')) >= 1;
 }
