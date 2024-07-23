@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { isDiamondHands, hasDiamondHand } from "@/lib/diamond-hands"
+import { isDiamondHands, attestedDiamondHands } from "@/lib/diamond-hands"
 import { signDiamondHand } from '@/lib/signing/diamond-hand';
 
 import {
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'User is not diamond hands' }, { status: 400 })
   }
 
-  if (await hasDiamondHand(walletAddress)) {
+  if (await attestedDiamondHands(walletAddress)) {
     return NextResponse.json({ error: 'User has attestation' }, { status: 400 })
   }
 

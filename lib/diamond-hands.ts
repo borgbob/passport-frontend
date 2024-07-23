@@ -15,8 +15,8 @@ export function isDiamondHands(address: Address) {
   return diamondHands.has(address.toLowerCase())
 }
 
-export async function hasDiamondHand(address: Address) {
+export async function attestedDiamondHands(address: Address) {
   const provider = new JsonRpcProvider(process.env.RPC_PROVIDER)
-  const proxy = getProxy(undefined, provider);
+  const proxy = getProxy(provider);
   return (await proxy.userAuthenticationCount(address, 'diamond-hand')) >= 1;
 }
