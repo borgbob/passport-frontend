@@ -1,14 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { JsonRpcProvider, Wallet } from "ethers";
 import { auth } from "@/lib/auth";
-import { EIP712Proxy } from "@ethereum-attestation-service/eas-sdk/dist/eip712-proxy";
-import { isDiamondHands } from "@/lib/diamond-hands"
-import { jsonStringifyBigInt } from "@/lib/utils"
+import { isDiamondHands, attestedDiamondHands } from "@/lib/diamond-hands"
+import { signDiamondHand } from '@/lib/signing/diamond-hand';
 
 import {
   PROXY_CONTRACT_ADDRESS,
   PRIVATE_KEY,
-  ATTESTATION_CONFIG,
 } from "@/lib/config"
 
 
@@ -37,36 +34,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'User is not diamond hands' }, { status: 400 })
   }
 
-  const provider = new JsonRpcProvider(process.env.RPC_PROVIDER)
-  const signer = new Wallet(PRIVATE_KEY, provider);
+  if (await attestedDiamondHands(walletAddress)) {
+    return NextResponse.json({ error: 'User has attestation' }, { status: 400 })
+  }
 
-  const proxy = new EIP712Proxy(PROXY_CONTRACT_ADDRESS, { signer: signer })
-
-  const delegated = await proxy.getDelegated()
-
-  const attestationType = ATTESTATION_CONFIG['diamond-hand'];
-
-  const params = {
-    schema: attestationType.schemaUID,
-    recipient: walletAddress,
-    expirationTime: 0n,
-    revocable: false,
-    refUID: '0x0000000000000000000000000000000000000000000000000000000000000000',
-    data: attestationType.encoder.encodeData([{
-      name: 'hasDiamondHand',
-      type: 'bool',
-      value: true
-    }]),
-    value: 0n,
-    deadline: 0n
-  };
-
-  const response = await delegated.signDelegatedProxyAttestation(params, signer);
-  const signedResponse = jsonStringifyBigInt({
-    message: response.message,
-    signature: response.signature,
-  })
-
-
+  const signedResponse = await signDiamondHand(walletAddress);
   return NextResponse.json({ signedResponse })
 }
