@@ -20,7 +20,7 @@ export function useAttest(kind: string) {
 
   const attestMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/attest', {
+      const res = await fetch(`/api/attest/${kind}`, {
         method: 'POST'
       })
       const data = await res.json()
@@ -31,7 +31,7 @@ export function useAttest(kind: string) {
       }
       try {
         const tx = await proxy.attestByDelegation(
-          Typed.string('diamond-hand'), {
+          Typed.string(kind), {
           schema: response.message.schema,
           data: {
             recipient: response.message.recipient,

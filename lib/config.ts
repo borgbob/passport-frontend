@@ -24,8 +24,8 @@ export const ATTESTATION_CONFIG = {
         encoder: new SchemaEncoder('bool hasDiamondHand'),
     },
     'twitter': {
-       schemaUID: '0x8516df6f958479d19cbd51204d069cc331b10f6b307a63042c6b24775340ec2a',
-       encoder: new SchemaEncoder('uint256 twitterId'),
+       schemaUID: '0x5dd1160c15fcc616c4c9f77e8bacff98d31f9519d7d1b94c03a970be787ae011',
+       encoder: new SchemaEncoder('string twitterId'),
     },
     'github': {
         schemaUID: '0x6723811a6182bcb2fde3035b69a8e3bb854f1ff76413b71d5673ed653208d7ac',

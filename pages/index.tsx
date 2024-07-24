@@ -58,9 +58,12 @@ interface SignedInProps {
 function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
   const githubLinked = session.user?.linkedAccounts?.['github']
   const twitterLinked = session.user?.linkedAccounts?.['twitter']
+
   const diamondHands = isDiamondHands(session.user?.sub)
-  const isAttested = useIsAttested(session.user?.sub, 'diamond-hand')
+  const isAttestedDiamondHands = useIsAttested(session.user?.sub, 'diamond-hand')
+  const isAttestedTwitter = useIsAttested(session.user?.sub, 'twitter')
   const { attest: attestDiamondHands } = useAttest('diamond-hand')
+  const { attest: attestTwitter } = useAttest('twitter')
 
   const socialConnections = [{
     name: 'github',
@@ -68,14 +71,16 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
     connectUrl: '/api/auth/signin/github',
     description: 'Link Github account',
     connectedDescription: `Connected as "${githubLinked}"`,
-    buttonLabel: 'Connect'
+    buttonLabel: 'Connect',
+    isAttested: false,
   }, {
     name: 'twitter',
     linked: twitterLinked,
     connectUrl: '/api/auth/signin/twitter',
     description: 'Link Twitter/X account',
     connectedDescription: `Connected as "${twitterLinked}"`,
-    buttonLabel: 'Connect'
+    buttonLabel: 'Connect',
+    isAttested: isAttestedTwitter,
   },]
 
   let totalPoints = 0;
@@ -99,28 +104,38 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
 
       <div className="flex flex-wrap mt-10">
 
-        {socialConnections.map(({ name, linked, connectUrl, description, connectedDescription, buttonLabel }) => (
+        {socialConnections.map(({ name, linked, connectUrl, description, connectedDescription, buttonLabel, isAttested }) => (
           <div key={name} className="mr-10 mt-10 flex flex-col items-center justify-between bg-gray-100 border rounded-sm p-5 w-[300px] h-[200px]">
             <Image src={`/${name}.png`} alt={`${name} connection`} width={75} height={75} />
             {linked ? (
-              <p>{connectedDescription}</p>) : (<>
+                <>
+                  {connectedDescription}
+                  {isAttested ? <p>Already attested</p> :
+                  <Button type="button" onClick={attestTwitter}>Attest</Button>}
+                </>
+            ) : (
+              <>
                 <p>{description}</p>
                 <form action={connectUrl} method="post">
                   <input type="hidden" name="csrfToken" value={csrfToken} />
                   <input type="hidden" name="callbackUrl" value={window.location.origin} />
                   <Button type="submit">{buttonLabel}</Button>
-                </form></>)}
+                </form>
+              </>
+            )}
           </div>
         ))}
+
         <div className="mr-10 mt-10 flex flex-col items-center justify-between bg-gray-100 border rounded-sm p-5 w-[300px] h-[200px]">
           <Image src={`/diamond.png`} alt={`Is diamond hands`} width={75} height={75} />
           {diamondHands ? (
             <><p>You have diamond hands!</p>
-              {isAttested ? <p>Already attested</p> :
+              {isAttestedDiamondHands ? <p>Already attested</p> :
               <Button type="button" onClick={attestDiamondHands}>Attest</Button>}</>
           ) : (
             <p>You do not have diamond hands</p>)}
         </div>
+
       </div>
     </div>
   )
