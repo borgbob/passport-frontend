@@ -8,7 +8,6 @@ import { useEffect, useState } from 'react';
 
 
 export function useAttest(kind: string) {
-  // TODO(jumbo) use "kind" to determine the attestation type
   const [proxy, setProxy] = useState<ethers.Contract| null>(null)
   const signer = useSigner()
 
