@@ -57,7 +57,7 @@ interface SignedInProps {
 
 function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
   const githubLinked = session.user?.linkedAccounts?.['github']
-  const twitterLinked = session.user?.linkedAccounts?.['twitter']
+  const twitterLinked = session.user?.linkedAccounts?.['twitter'].split(':')[1]
 
   const diamondHands = isDiamondHands(session.user?.sub)
   const isAttestedDiamondHands = useIsAttested(session.user?.sub, 'diamond-hand')

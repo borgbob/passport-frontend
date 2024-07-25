@@ -143,7 +143,7 @@ export const config: NextAuthConfig = {
           linkedAccounts[provider] = profile?.login as string
           break;
         case 'twitter':
-          linkedAccounts[provider] = (profile?.data as any)?.id as string
+          linkedAccounts[provider] = `${(profile?.data as any)?.id}:${(profile?.data as any)?.username}`
           break;
         default:
           console.warn('Unknown provider', provider, profile)

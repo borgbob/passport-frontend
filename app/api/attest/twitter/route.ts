@@ -39,6 +39,6 @@ export async function POST(req: NextRequest) {
   if (await attestedTwitter(walletAddress)) {
     return NextResponse.json({ error: 'User has attestation' }, { status: 400 })
   }
-  const signedResponse = await signTwitter(session.user?.linkedAccounts?.twitter, walletAddress);
+  const signedResponse = await signTwitter(session.user?.linkedAccounts?.twitter.split(':')[0], walletAddress);
   return NextResponse.json({ signedResponse })
 }
