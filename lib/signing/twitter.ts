@@ -10,6 +10,7 @@ import {
   JSON_RPC_ENDPOINT,
 } from "@/lib/config"
 import { jsonStringifyBigInt } from "@/lib/utils"
+import { ATTESTATION_DEADLINE } from "@/lib/config";
 
 
 export async function signTwitter(twitterId: string, address: Address) {
@@ -33,7 +34,7 @@ export async function signTwitter(twitterId: string, address: Address) {
       value: twitterId
     }]),
     value: 0n,
-    deadline: 0n
+    deadline: BigInt(Math.floor(new Date().getTime() / 1000) + ATTESTATION_DEADLINE),
   };
 
   const response = await delegated.signDelegatedProxyAttestation(params, signer);

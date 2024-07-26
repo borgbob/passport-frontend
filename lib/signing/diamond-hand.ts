@@ -10,6 +10,7 @@ import {
   JSON_RPC_ENDPOINT,
 } from "@/lib/config"
 import { jsonStringifyBigInt } from "@/lib/utils"
+import { ATTESTATION_DEADLINE } from "@/lib/config";
 
 
 export async function signDiamondHand(address: Address) {
@@ -33,7 +34,7 @@ export async function signDiamondHand(address: Address) {
       value: true
     }]),
     value: 0n,
-    deadline: 0n
+    deadline: BigInt(Math.floor(new Date().getTime() / 1000) + ATTESTATION_DEADLINE),
   };
 
   const response = await delegated.signDelegatedProxyAttestation(params, signer);
