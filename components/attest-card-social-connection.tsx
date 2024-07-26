@@ -10,7 +10,7 @@ export type AttestCardSocialConnectionProps = {
   connectedDescription: string
   buttonLabel: string
   connectUrl: string
-  linked: boolean
+  linked: string
   csrfToken: string
   isAttested: boolean
   attest?: () => void
