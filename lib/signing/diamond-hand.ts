@@ -7,12 +7,13 @@ import {
   PROXY_CONTRACT_ADDRESS,
   PRIVATE_KEY,
   ATTESTATION_CONFIG,
+  JSON_RPC_ENDPOINT,
 } from "@/lib/config"
 import { jsonStringifyBigInt } from "@/lib/utils"
 
 
 export async function signDiamondHand(address: Address) {
-  const provider = new JsonRpcProvider(process.env.RPC_PROVIDER)
+  const provider = new JsonRpcProvider(JSON_RPC_ENDPOINT)
   const signer = new Wallet(PRIVATE_KEY, provider);
   const proxy = new EIP712Proxy(PROXY_CONTRACT_ADDRESS, { signer: signer })
 

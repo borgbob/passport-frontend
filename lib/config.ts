@@ -33,3 +33,14 @@ export const ATTESTATION_CONFIG = {
         encoder: new SchemaEncoder('string githubId'),
     }
 };
+
+export const JSON_RPC_ENDPOINT = (() => {
+  if (process.env.RPC_PROVIDER) {
+    return process.env.RPC_PROVIDER;
+  }
+
+  if (isProd) {
+    return 'https://avalanche-fuji-c-chain-rpc.publicnode.com/';
+  }
+})();
+
