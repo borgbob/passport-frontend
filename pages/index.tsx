@@ -1,67 +1,36 @@
 import { useAuth, type Auth } from "@/hooks/useAuth";
-import Image from 'next/image'
-import { SiweMessage } from "siwe";
-import { ConnectKitButton } from 'connectkit';
-import type { Address, Chain } from 'viem'
-import { useAccount, useSignMessage } from "wagmi"
 import { Button } from "@/components/ui/button"
-
+import { AttestCard } from "@/components/attest-card"
+import { AttestCardSocialConnection } from "@/components/attest-card-social-connection"
+import { Header } from "@/components/header"
+import { ConnectHeader } from "@/components/connect-header"
 
 import { isDiamondHands } from "@/lib/diamond-hands"
 import { useIsAttested } from "@/hooks/useIsAttested";
 import { useAttest } from "@/hooks/useAttest";
 
-interface SignedOutProps {
-  csrfToken: Auth['csrfToken']
-  signIn: Auth['signIn']
-  address?: Address
-  chain?: Chain
-  signMessageAsync: ReturnType<typeof useSignMessage>['signMessageAsync']
-}
-
-function SignedOut({ csrfToken, signIn, address, chain, signMessageAsync }: SignedOutProps) {
-  async function handleSignIn() {
-    if (!csrfToken || !address) {
-      return;
-    }
-
-    const message = new SiweMessage({
-      domain: window.location.host,
-      address: address,
-      statement: "Sign in with Ethereum",
-      uri: window.location.origin,
-      version: "1",
-      chainId: chain?.id,
-      nonce: csrfToken,
-    })
-
-    const signature = await signMessageAsync({
-      message: message.prepareMessage()
-    })
-
-    signIn({ message: JSON.stringify(message), signature })
-  }
-
-  return (
-    <Button type="button" onClick={() => {
-      handleSignIn()
-    }}>Login</Button>
-  )
-}
-
 interface SignedInProps {
-  session: NonNullable<Auth['session']>
+  session: Auth['session']
   csrfToken: Auth['csrfToken']
   signOut: Auth['signOut']
 }
 
-function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
-  const githubLinked = session.user?.linkedAccounts?.['github']
-  const twitterLinked = session.user?.linkedAccounts?.['twitter'].split(':')[1]
+function extractTwitterUsername(linkedId?: string) {
+  if (!linkedId) {
+    return ''
+  }
+  return linkedId.split(':')[1]
+}
 
-  const diamondHands = isDiamondHands(session.user?.sub)
-  const isAttestedDiamondHands = useIsAttested(session.user?.sub, 'diamond-hand')
-  const isAttestedTwitter = useIsAttested(session.user?.sub, 'twitter')
+function Main({ session, csrfToken }: SignedInProps) {
+  const userName = session?.user?.userName ?? 'Anonymous';
+  const githubLinked = session?.user?.linkedAccounts?.['github']
+  const twitterLinked = extractTwitterUsername(session?.user?.linkedAccounts?.['twitter'])
+  const walletAddress = session?.user?.sub
+
+  const diamondHands = isDiamondHands(walletAddress)
+  const isAttestedDiamondHands = useIsAttested(walletAddress, 'diamond-hand')
+  const isAttestedTwitter = useIsAttested(walletAddress, 'twitter')
   const { attest: attestDiamondHands } = useAttest('diamond-hand')
   const { attest: attestTwitter } = useAttest('twitter')
 
@@ -81,6 +50,7 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
     connectedDescription: `Connected as "${twitterLinked}"`,
     buttonLabel: 'Connect',
     isAttested: isAttestedTwitter,
+    attest: attestTwitter
   },]
 
   let totalPoints = 0;
@@ -95,77 +65,49 @@ function SignedIn({ session, signOut, csrfToken }: SignedInProps) {
   }
 
   return (
-    <div className="flex flex-col items-center">
-      <Button type="button" onClick={() => {
-        signOut()
-      }}>Logout</Button>
+    <>
+      <Header
+        userName={userName}
+        isConnected={true}
+        walletAddress={walletAddress}
+        score={totalPoints} />
+      {walletAddress && (
+        <div className="flex flex-wrap justify-between items-center">
 
-      <h1 className="text-2xl font-semibold mt-5">{session.user?.sub} (total points: {totalPoints})</h1>
-
-      <div className="flex flex-wrap mt-10">
-
-        {socialConnections.map(({ name, linked, connectUrl, description, connectedDescription, buttonLabel, isAttested }) => (
-          <div key={name} className="mr-10 mt-10 flex flex-col items-center justify-between bg-gray-100 border rounded-sm p-5 w-[300px] h-[200px]">
-            <Image src={`/${name}.png`} alt={`${name} connection`} width={75} height={75} />
-            {linked ? (
-                <>
-                  {connectedDescription}
-                  {isAttested ? <p>Already attested</p> :
-                  <Button type="button" onClick={attestTwitter}>Attest</Button>}
-                </>
+          {socialConnections.map((props) => (
+            <AttestCardSocialConnection key={props.name} {...props} csrfToken={csrfToken} />
+          ))}
+          <AttestCard name="diamond">
+            {diamondHands ? (
+              <><p>You have diamond hands!</p>
+                {isAttestedDiamondHands ? <p>Already attested</p> :
+                  <Button variant="passport" type="button" onClick={attestDiamondHands}>Attest</Button>}</>
             ) : (
-              <>
-                <p>{description}</p>
-                <form action={connectUrl} method="post">
-                  <input type="hidden" name="csrfToken" value={csrfToken} />
-                  <input type="hidden" name="callbackUrl" value={window.location.origin} />
-                  <Button type="submit">{buttonLabel}</Button>
-                </form>
-              </>
-            )}
-          </div>
-        ))}
-
-        <div className="mr-10 mt-10 flex flex-col items-center justify-between bg-gray-100 border rounded-sm p-5 w-[300px] h-[200px]">
-          <Image src={`/diamond.png`} alt={`Is diamond hands`} width={75} height={75} />
-          {diamondHands ? (
-            <><p>You have diamond hands!</p>
-              {isAttestedDiamondHands ? <p>Already attested</p> :
-              <Button type="button" onClick={attestDiamondHands}>Attest</Button>}</>
-          ) : (
-            <p>You do not have diamond hands</p>)}
-        </div>
-
-      </div>
-    </div>
+              <p>You do not have diamond hands</p>)}
+          </AttestCard>
+        </div>)}
+    </>
   )
 }
 
 export default function Home() {
-  const { signMessageAsync } = useSignMessage()
   const { session, csrfToken, signIn, signOut } = useAuth()
-  const { address, chain, isConnected } = useAccount()
 
   return (
     <main className="flex flex-col items-center justify-between pt-5">
+      <div className="w-[1024px]">
+        <ConnectHeader
+          signedIn={!!session}
+          csrfToken={csrfToken}
+          onSignIn={signIn}
+          onSignOut={signOut} />
 
-      {!isConnected ? (
-        <div>
-          <ConnectKitButton />
-        </div>
-      ) : session ?
-        <SignedIn
+        <Main
           csrfToken={csrfToken}
           session={session}
           signOut={signOut}
-        /> :
-        <SignedOut
-          csrfToken={csrfToken}
-          signIn={signIn}
-          address={address}
-          chain={chain}
-          signMessageAsync={signMessageAsync}
-        />}
+        />
+      </div>
     </main>
   );
 }

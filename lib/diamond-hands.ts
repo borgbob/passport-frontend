@@ -11,7 +11,10 @@ const devDiamondHands: Address[] = [
 
 const diamondHands = new Set(process.env.NODE_ENV === 'production' ? prodDiamondHands : devDiamondHands)
 
-export function isDiamondHands(address: Address) {
+export function isDiamondHands(address?: Address) {
+  if (!address) {
+    return false
+  }
   return diamondHands.has(address.toLowerCase())
 }
 

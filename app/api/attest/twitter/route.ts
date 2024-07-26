@@ -4,16 +4,11 @@ import { isTwitterAuthenticated, attestedTwitter } from "@/lib/twitter"
 import { signTwitter } from '@/lib/signing/twitter';
 import {
   PROXY_CONTRACT_ADDRESS,
-  PRIVATE_KEY,
 } from "@/lib/config"
 
 
 if (!PROXY_CONTRACT_ADDRESS) {
   throw new Error('PROXY_CONTRACT_ADDRESS is not set')
-}
-
-if (!PRIVATE_KEY) {
-  throw new Error('PRIVATE_KEY is not set')
 }
 
 export const runtime = "edge";
