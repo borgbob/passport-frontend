@@ -26,3 +26,7 @@ function bigIntReviver(_key: string, value: any): any {
   }
   return value;
 }
+
+export function getWalletAddress(session: any) {
+  return session.user.sub
+}
